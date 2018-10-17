@@ -8,6 +8,14 @@
 /*
  * Serial Commands 
  * SPI
+ * S AA DD DD<cr>  AA address 00-7F write, 80-FF read  DD DD 16-bit data MSB first
+ *            returns s AA DD DD YY YY<cr>  YY YY 16 bit returned data
+ *  CSB: pin 7
+    MOSI: pin 11
+    MISO: pin 12
+    SCK: pin 13           
+ *            
+ * Obsolete :          
  * SW XX...XX  <cr>  N number of XX bytes in hex, separated by space
  *            returns sW<cr>
  * SR n XX...XX <cr>   read n bytes after transmitting XX...XX,  appends 00 for each byte to read
@@ -67,10 +75,24 @@ bool _cmdDataFound = false;
 bool _cmdDataError = false;
 const char _ID = 1; // serial protocol ID number
 
+const int chipSelectPin = 7;
+
 void setup() {
   Serial.begin(57600);
   while (!Serial);
 
+  // start the SPI library:
+  SPI.begin();
+  pinMode(chipSelectPin, OUTPUT);
+  pinMode(SS, OUTPUT);
+  digitalWrite(chipSelectPin, HIGH);
+  //SPI.beginTransaction(SPISettings(14000000, MSBFIRST, SPI_MODE0)); // 8MHz clock
+
+
+  //default too
+  SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0)); // 4MHz clock 
+  // data out changes on clack fall, there is a clock rise in centr of data
+  // to transfer 3 bytes is 12.5us- ~ 1us between bytes- 3us from last data clock to cs rise
   Serial.print("Starting... ");
 
 }
@@ -83,7 +105,12 @@ void loop() {
     if( (inChar >= 32 && inChar <= 126) || inChar == '\r' || inChar == '\n' )
     {
       pushSerialData(inChar);
-      if (inChar == END_CHAR) decodeSerial();
+      if (inChar == END_CHAR)
+      {
+        decodeSerial();
+        drainTheBuffer();
+        
+      }
       //Serial.println(inChar);
     }
     else
@@ -265,10 +292,10 @@ String convertToHexChar(int data8)
   char MSD = (char)((data8>>4)&0xF);
   char LSD = (char)((data8)&0xF);
 
-  if(MSD <9) MSD += '0';
+  if(MSD <=9) MSD += '0';
   else MSD += 'A'-10;
 
-  if(LSD <9) LSD += '0';
+  if(LSD <=9) LSD += '0';
   else LSD += 'A'-10;
 
   return (String)MSD+(String)LSD;
@@ -311,9 +338,6 @@ void decodeSerial()
   if(tmp == 'S')
   {
     Serial.print("found SPI comand ");
-    tmp = getNextChar();
-    if(tmp == 'W')
-    {
       while(true)
       {
         tmp = getNextChar();
@@ -330,36 +354,34 @@ void decodeSerial()
           else break;
         }
         else break;
-      }
+      }// end while
       // send SPI data
       // to do !!!!!!!!!!!!!
-
+      unsigned int result1 = 0;        // result to return
+      unsigned int result2 = 0;        // result to return
+      digitalWrite(chipSelectPin, LOW);
+      //digitalWrite(SS, LOW);
+      //delay(1);
+      SPI.transfer(txrxbuff[0]);       // address
+      result1 = SPI.transfer(txrxbuff[1]);    // data msb
+      result2 = SPI.transfer(txrxbuff[2]);    // data LSB
+      //delay(1);
+      digitalWrite(chipSelectPin, HIGH);
+      //digitalWrite(SS, HIGH);
    
       // return response
-      String resp = "sW";
+      String resp = "s";
       for(int i=0; i<buffSize; i++)
       {
         resp += " ";
         resp += convertToHexChar(txrxbuff[i]);
         //Serial.println(resp + ":"+(String)(i));
       }
+      resp += " " + convertToHexChar(result1);
+      resp += " " + convertToHexChar(result2);
+      //resp += " 00 00"; // temparary untill read SPI
       Serial.println(resp);
-  
-    }
-    else if(tmp == 'R')
-    {
-    
-    }
-    else if(tmp == 'A')
-    {
-    
-    }
-    else
-    {
-      // error  
-      drainTheBuffer();
-    }
-  }
+  }// end if 
   else if (tmp == 'I')
   {
     Serial.print("found I2C comand ");
