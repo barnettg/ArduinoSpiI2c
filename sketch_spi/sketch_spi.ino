@@ -3,6 +3,13 @@
 
 #include <SPI.h>
 //#include <Wire.h>
+#include <Wire.h>
+#include <Adafruit_MCP4725.h>
+
+Adafruit_MCP4725 dac;
+
+// Notes
+// Oct 16 : to add I2C protocol and MCP4725 DAC driver
 
 
 /*
@@ -15,17 +22,21 @@
     MISO: pin 12
     SCK: pin 13           
  *            
- * Obsolete :          
- * SW XX...XX  <cr>  N number of XX bytes in hex, separated by space
- *            returns sW<cr>
- * SR n XX...XX <cr>   read n bytes after transmitting XX...XX,  appends 00 for each byte to read
- *            returns sR xx...xx <cr>
- *            
- * SA XX...XX <cr>   read byte after transmitting each XX, 
- *            returns sR xx...xx <cr>
- *            
  *            
  *  I2C          
+ *  
+ *  s - data byte size 0,1,2,3,4..
+ *  AA - hex address
+ *  RR - hex register
+ *  DD - hex data
+ *  p -raw read
+ *  r - read register
+ *  w - write
+ *  pAAS<cr>   - raw read address of S bytes
+ *  rAARRS<cr> - read address AA register RR number of bytes S
+ *  wAASDDDDDD<cr> - write address AA, number of bytes S, data DD up to 3 bytes
+ *  
+ *  obsolete
  *  IW1 AA DD <cr>    write 1 byte DD to address AA
  *            returns iW1<cr>
  *  IW2 AA DDDD <cr>    write 16 bits DDDD to address AA 
@@ -93,6 +104,11 @@ void setup() {
   SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0)); // 4MHz clock 
   // data out changes on clack fall, there is a clock rise in centr of data
   // to transfer 3 bytes is 12.5us- ~ 1us between bytes- 3us from last data clock to cs rise
+
+  // For Adafruit MCP4725A1 the address is 0x62 (default) or 0x63 (ADDR pin tied to VCC)
+  dac.begin(0x62);
+  dac.setVoltage(1024, false); // should set to 1/4 voltage
+  
   Serial.print("Starting... ");
 
 }
@@ -311,27 +327,6 @@ void decodeSerial()
   char buffSize = 0; 
 /*
  * Serial Commands 
- * SPI
- * SW XX...XX  <cr>  N number of XX bytes in hex, separated by space
- *            returns sW XX...XX <cr>
- * SR n XX...XX <cr>   read n bytes after transmitting XX...XX,  appends 00 for each byte to read
- *            returns sR xx...xx yy...yy<cr> where yy is returned values
- *            
- * SA XX...XX <cr>   read byte after transmitting each XX, 
- *            returns sA xx...xx yy...yy <cr>  where yy is returned values
- *            
- *            
- *  I2C          
- *  IW1 AA DD <cr>    write 1 byte DD to address AA
- *            returns iW1<cr>
- *  IW2 AA DDDD <cr>    write 16 bits DDDD to address AA 
- *             returns iW2<cr>
- *  IR1 AA <cr>      read 1 byte 
- *             returns iR1 xx <cr>
- *  IR2 AA <cr>      read 2 bytes
- *             returns iR2 xx xx<cr>
- *  Ir1  <cr>        raw read 1 byte
- *             returns ir1 xx<cr>
  *  
  */
   tmp = getNextChar();
