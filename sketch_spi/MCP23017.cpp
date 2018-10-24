@@ -16,15 +16,21 @@ void MCP23017::writeReg(unsigned char reg, unsigned char data)
   Wire.write(data);   
   Wire.endTransmission();
 }
-unsigned char MCP23017::readReg(unsigned char reg)
+int MCP23017::readReg(unsigned char reg)
 {
   unsigned char result=0;
   Wire.beginTransmission(_I2C_address);
   Wire.write(reg);
   Wire.endTransmission();
-  Wire.requestFrom(_I2C_address,1);
-  if(Wire.available()<=1) result = Wire.read(); //???????????????????????
-	return result;
+  Wire.requestFrom((uint8_t)_I2C_address,(uint8_t)1);
+  //delay(10); // wait 10 ms
+  if(Wire.available()>0)
+  {
+    result = Wire.read(); //
+    return (int) result;
+  }
+  
+	return -1;
 }  
 
 void MCP23017::initialize(unsigned char portAdir, unsigned char portBdir)

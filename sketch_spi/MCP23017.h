@@ -9,7 +9,7 @@ class MCP23017
     MCP23017(unsigned char I2C_address,unsigned char portAdir, unsigned char portBdir);
     // I2C methods
     void writeReg(unsigned char reg, unsigned char data);
-    unsigned char readReg(unsigned char reg);  
+    int readReg(unsigned char reg);  
 
 	void initialize(unsigned char portAdir, unsigned char portBdir);
 	
@@ -57,6 +57,16 @@ class MCP23017
       DIN = 0xFF
    }Direction;
 
+   typedef enum  
+   {
+      Base0 = 0x20,
+      Base1,
+      Base2,
+      Base3,
+      Base4,
+      Base5,
+      Base6
+   }Address;
    
     
   private:

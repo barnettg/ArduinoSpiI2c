@@ -5,6 +5,8 @@
 //#include <Wire.h>
 #include <Wire.h>
 #include <Adafruit_MCP4725.h>
+#include "MCP23017.h"
+#include "AMC7812.h"
 
 Adafruit_MCP4725 dac;
 
@@ -69,6 +71,7 @@ void commandBad(void);
 void sendOutPrint(String dtaStr);
 void sendOutPrintln(String dtaStr);
 String convertToHexChar(int data8);
+String convertToSingleHexChar(uint8_t data8);
 
 String _ver = "1.0";
 // serial buffer
@@ -87,6 +90,15 @@ bool _cmdDataError = false;
 const char _ID = 1; // serial protocol ID number
 
 const int chipSelectPin = 7;
+
+
+MCP23017 *m_MCP23017_20;//(CMCP23017::Base0);
+MCP23017 *m_MCP23017_21;//(CMCP23017::Base1);
+MCP23017 *m_MCP23017_22;//(CMCP23017::Base2);
+MCP23017 *m_MCP23017_23; //(CMCP23017::Base3);
+MCP23017 *m_MCP23017_24; //(CMCP23017::Base4);
+
+AMC7812 *m_AMC7812_64;
 
 void setup() {
   Serial.begin(57600);
@@ -107,9 +119,18 @@ void setup() {
 
   // For Adafruit MCP4725A1 the address is 0x62 (default) or 0x63 (ADDR pin tied to VCC)
   dac.begin(0x62);
-  dac.setVoltage(1024, false); // should set to 1/4 voltage
+  //dac.setVoltage(1024, false); // should set to 1/4 voltage
   
   Serial.print("Starting... ");
+
+
+   m_MCP23017_20 = new MCP23017(MCP23017::Base0, MCP23017::DIN,  MCP23017::DIN);
+   m_MCP23017_21 = new MCP23017(MCP23017::Base1, MCP23017::DOUT, MCP23017::DOUT);
+   m_MCP23017_22 = new MCP23017(MCP23017::Base2, MCP23017::DIN,  MCP23017::DIN);
+   m_MCP23017_23 = new MCP23017(MCP23017::Base3, MCP23017::DOUT, MCP23017::DIN);
+   m_MCP23017_24 = new MCP23017(MCP23017::Base4, MCP23017::DOUT, MCP23017::DIN);
+
+   m_AMC7812_64 = new AMC7812(0x64);
 
 }
 
@@ -316,6 +337,15 @@ String convertToHexChar(int data8)
 
   return (String)MSD+(String)LSD;
 }
+String convertToSingleHexChar(uint8_t data8)
+{
+  char LSD = (char)((data8)&0xF);
+
+  if(LSD <=9) LSD += '0';
+  else LSD += 'A'-10;
+
+  return (String)LSD;
+}
 //------------------------
 // decode the serial commands after \n received
 //------------------------
@@ -330,6 +360,53 @@ void decodeSerial()
  *  
  */
   tmp = getNextChar();
+  if(tmp == 'D')
+  {
+    // format DWxxx
+    // return dwxxx
+    //Serial.println("\n found DAC comand ");
+    tmp = getNextChar();
+    if (tmp == 'W')
+    {
+      int setVal = 0;
+      tmp = getNextChar();
+      tmp2 = getNextChar();
+      int temp16 = get8bitval(tmp, tmp2); // upper 8 bits
+
+      tmp2 = getNextChar();
+      temp16 <<=4;
+      temp16 += get8bitval('0', tmp2); // lower 4 bits -- combine for 12 bits
+      //Serial.print("temp16: ");
+      //Serial.println(temp16, HEX);
+      
+      dac.setVoltage(temp16, false); // 
+
+      uint8_t convTop4 = (uint8_t) ( (temp16 >> 8) & 0xF);
+      uint8_t convMid4 = (uint8_t) ( (temp16 >> 4) & 0xF);
+      uint8_t convLower4 = (uint8_t) ( (temp16) & 0xF);
+      
+      // return response
+      String resp = "dw";
+      //Serial.print(resp);
+      resp += convertToSingleHexChar(convTop4);
+      //Serial.print("  " + resp);
+      resp += convertToSingleHexChar(convMid4);
+      //Serial.print("  " + resp);
+      resp += convertToSingleHexChar(convLower4);
+      //Serial.print("  " + resp);
+
+      Serial.println(resp);
+    }
+    else
+    {
+      // return response
+      String resp = "d";
+      resp += tmp ;
+      resp += "?" ;
+      Serial.println(resp);
+    }
+    
+  }
   if(tmp == 'S')
   {
     Serial.print("found SPI comand ");
