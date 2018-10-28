@@ -11,7 +11,7 @@
 Adafruit_MCP4725 dac;
 
 // Notes
-// Oct 16 : to add I2C protocol and MCP4725 DAC driver
+// 
 
 
 /*
@@ -38,19 +38,57 @@ Adafruit_MCP4725 dac;
  *  rAARRS<cr> - read address AA register RR number of bytes S
  *  wAASDDDDDD<cr> - write address AA, number of bytes S, data DD up to 3 bytes
  *  
- *  obsolete
- *  IW1 AA DD <cr>    write 1 byte DD to address AA
- *            returns iW1<cr>
- *  IW2 AA DDDD <cr>    write 16 bits DDDD to address AA 
- *             returns iW2<cr>
- *  IR1 AA <cr>      read 1 byte 
- *             returns iR1 xx <cr>
- *  IR2 AA <cr>      read 2 bytes
- *             returns iR2 xx xx<cr>
- *  Ir1  <cr>        raw read 1 byte
- *             returns ir1 xx<cr>
- *  
+ *   
  */
+
+//MCP4725DAC
+// send DWxxx<cr>   set DAC to hex value xxx
+//      rec back dwxxx
+//
+//AMC7812
+//   send AWRRDDDD<cr>    write register 8-bit hex RR with 16-bit hex  DDDD
+//       rec back awrrdddd
+//   send ARrr<cr>    read 16-bit register rr (8-bit hex)
+//      rec back arRRDDDD 16-bit hex  DDDD
+//
+//   send ADNDDD<cr>  write DAC N(4-bit hex) with 12-bit hex  DDD
+//    rec back adnddd
+//
+//   send AAN<cr>  read ADC N(4-bit hex) 
+//    rec back aanDDD     12-bit hex  DDD
+//
+//   send AGWDD<cr>  write GPIO DD(8-bit hex) 
+//    rec back agwdd   
+//
+//   send AGR<cr>  read GPIO 
+//    rec back agrdd   DD(8-bit hex) 
+//
+//   send AI<cr>  initialize the AMC7812 with the test fixtur default configuraton
+//    rec back ai  
+//
+//
+//MPC23017
+//   send GWNRRDD<cr>  write device N(0-5) reg RR(8-bit hex)  with data  DD(8-bit hex) 
+//    rec back gwnrrdd   
+//
+//   send GRNRR<cr>  read device N(0-5) reg RR(8-bit hex)  
+//    rec back grnrrdd   with data  DD(8-bit hex) 
+//
+//   send GIN<cr>  initialize device N(0-5) with the test fixture default configuraton
+//    rec back gin
+//
+//   send GARN<cr>  read device N(0-5) port A
+//    rec back garnDD   with data  DD(8-bit hex) 
+//
+//   send GBRN<cr>  read device N(0-5) port B
+//    rec back gbrnDD   with data  DD(8-bit hex) 
+//
+//   send GAWNDD<cr>  write device N(0-5) port A with data  DD(8-bit hex) 
+//    rec back gawnDD   
+//
+//   send GBWNDD<cr>  read device N(0-5) port B with data  DD(8-bit hex) 
+//    rec back gbwnDD  
+
  // function prototypes
 void sendOutData(String dtaStr);
 int getRecBufferSize(void);
@@ -73,6 +111,11 @@ void sendOutPrintln(String dtaStr);
 String convertToHexChar(int data8);
 String convertToSingleHexChar(uint8_t data8);
 
+String conver4bitToString(unsigned char val);
+String conver8bitToString(unsigned char val);
+String conver12bitToString(unsigned int val);
+String conver16bitToString(unsigned int val);
+
 String _ver = "1.0";
 // serial buffer
 char serialArray[256];
@@ -92,13 +135,21 @@ const char _ID = 1; // serial protocol ID number
 const int chipSelectPin = 7;
 
 
-MCP23017 *m_MCP23017_20;//(CMCP23017::Base0);
-MCP23017 *m_MCP23017_21;//(CMCP23017::Base1);
-MCP23017 *m_MCP23017_22;//(CMCP23017::Base2);
-MCP23017 *m_MCP23017_23; //(CMCP23017::Base3);
-MCP23017 *m_MCP23017_24; //(CMCP23017::Base4);
+//MCP23017 *m_MCP23017_20;//(CMCP23017::Base0);
+//MCP23017 *m_MCP23017_21;//(CMCP23017::Base1);
+//MCP23017 *m_MCP23017_22;//(CMCP23017::Base2);
+//MCP23017 *m_MCP23017_23; //(CMCP23017::Base3);
+//MCP23017 *m_MCP23017_24; //(CMCP23017::Base4);
+//
+//AMC7812 *m_AMC7812_64;
 
-AMC7812 *m_AMC7812_64;
+MCP23017 m_MCP23017_20(MCP23017::Base0, MCP23017::DIN,  MCP23017::DIN);
+MCP23017 m_MCP23017_21(MCP23017::Base1, MCP23017::DOUT, MCP23017::DOUT);
+MCP23017 m_MCP23017_22(MCP23017::Base2, MCP23017::DIN,  MCP23017::DIN);
+MCP23017 m_MCP23017_23(MCP23017::Base3, MCP23017::DOUT, MCP23017::DIN);
+MCP23017 m_MCP23017_24(MCP23017::Base4, MCP23017::DOUT, MCP23017::DIN);
+AMC7812 m_AMC7812_64(0x64);
+  
 
 void setup() {
   Serial.begin(57600);
@@ -124,13 +175,13 @@ void setup() {
   Serial.print("Starting... ");
 
 
-   m_MCP23017_20 = new MCP23017(MCP23017::Base0, MCP23017::DIN,  MCP23017::DIN);
-   m_MCP23017_21 = new MCP23017(MCP23017::Base1, MCP23017::DOUT, MCP23017::DOUT);
-   m_MCP23017_22 = new MCP23017(MCP23017::Base2, MCP23017::DIN,  MCP23017::DIN);
-   m_MCP23017_23 = new MCP23017(MCP23017::Base3, MCP23017::DOUT, MCP23017::DIN);
-   m_MCP23017_24 = new MCP23017(MCP23017::Base4, MCP23017::DOUT, MCP23017::DIN);
-
-   m_AMC7812_64 = new AMC7812(0x64);
+//   m_MCP23017_20 = new MCP23017(MCP23017::Base0, MCP23017::DIN,  MCP23017::DIN);
+//   m_MCP23017_21 = new MCP23017(MCP23017::Base1, MCP23017::DOUT, MCP23017::DOUT);
+//   m_MCP23017_22 = new MCP23017(MCP23017::Base2, MCP23017::DIN,  MCP23017::DIN);
+//   m_MCP23017_23 = new MCP23017(MCP23017::Base3, MCP23017::DOUT, MCP23017::DIN);
+//   m_MCP23017_24 = new MCP23017(MCP23017::Base4, MCP23017::DOUT, MCP23017::DIN);
+//
+//   m_AMC7812_64 = new AMC7812(0x64);
 
 }
 
@@ -199,7 +250,6 @@ void pushSerialData(char dta)
     serialTop--; // overran buffer so back off by one
     //ok if buffer size is 256 otherwise have to watch math
   }
-  
 }
 
 //---------------------------------------
@@ -346,13 +396,56 @@ String convertToSingleHexChar(uint8_t data8)
 
   return (String)LSD;
 }
+String conver4bitToString(unsigned char val)
+{
+  String resp = "";
+  uint8_t convRegN2 = (uint8_t) ( (val) & 0xF);
+  resp += convertToSingleHexChar(convRegN2);
+  return resp;  
+}
+
+String conver8bitToString(unsigned char val)
+{
+  String resp = "";
+  
+  uint8_t convRegN1 = (uint8_t) ( (val >> 4) & 0xF);
+  uint8_t convRegN2 = (uint8_t) ( (val) & 0xF);
+  resp += convertToSingleHexChar(convRegN1);
+  resp += convertToSingleHexChar(convRegN2);  
+  return resp;  
+}
+String conver12bitToString(unsigned int val)
+{
+  String resp = "";
+  uint8_t convDataN2 = (uint8_t) ( (val >> 8) & 0xF);
+  uint8_t convDataN3 = (uint8_t) ( (val >> 4) & 0xF);
+  uint8_t convDataN4 = (uint8_t) ( (val) & 0xF); 
+  resp += convertToSingleHexChar(convDataN2);
+  resp += convertToSingleHexChar(convDataN3);
+  resp += convertToSingleHexChar(convDataN4);
+  return resp;     
+}
+String conver16bitToString(unsigned int val)
+{
+  String resp = "";
+  uint8_t convDataN1 = (uint8_t) ( (val >> 12) & 0xF);
+  uint8_t convDataN2 = (uint8_t) ( (val >> 8) & 0xF);
+  uint8_t convDataN3 = (uint8_t) ( (val >> 4) & 0xF);
+  uint8_t convDataN4 = (uint8_t) ( (val) & 0xF); 
+  resp += convertToSingleHexChar(convDataN1);
+  resp += convertToSingleHexChar(convDataN2);
+  resp += convertToSingleHexChar(convDataN3);
+  resp += convertToSingleHexChar(convDataN4);
+  return resp;     
+}      
+
 //------------------------
 // decode the serial commands after \n received
 //------------------------
 void decodeSerial()
 {
   char tmp;
-  char tmp2;
+    
   int txrxbuff[20];
   char buffSize = 0; 
 /*
@@ -365,17 +458,21 @@ void decodeSerial()
     // format DWxxx
     // return dwxxx
     //Serial.println("\n found DAC comand ");
-    tmp = getNextChar();
-    if (tmp == 'W')
+    char tmp2;
+    tmp2 = getNextChar();
+    if (tmp2 == 'W')
     {
       int setVal = 0;
-      tmp = getNextChar();
-      tmp2 = getNextChar();
-      int temp16 = get8bitval(tmp, tmp2); // upper 8 bits
+      char tmp3;
+      char tmp4;
+  
+      tmp3 = getNextChar();
+      tmp4 = getNextChar();
+      int temp16 = get8bitval(tmp3, tmp4); // upper 8 bits
 
-      tmp2 = getNextChar();
+      tmp3 = getNextChar();
       temp16 <<=4;
-      temp16 += get8bitval('0', tmp2); // lower 4 bits -- combine for 12 bits
+      temp16 += get8bitval('0', tmp3); // lower 4 bits -- combine for 12 bits
       //Serial.print("temp16: ");
       //Serial.println(temp16, HEX);
       
@@ -407,9 +504,263 @@ void decodeSerial()
     }
     
   }
-  if(tmp == 'S')
+
+  else if(tmp == 'A')
   {
-    Serial.print("found SPI comand ");
+    //AMC7812
+    //   send AWRRDDDD<cr>    write register 8-bit hex RR with 16-bit hex  DDDD
+    //       rec back awrrdddd
+    //   send ARrr<cr>    read 16-bit register rr (8-bit hex)
+    //      rec back arRRDDDD 16-bit hex  DDDD
+    //
+    //   send ADNDDD<cr>  write DAC N(4-bit hex) with 12-bit hex  DDD
+    //    rec back adnddd
+    //
+    //   send AAN<cr>  read ADC N(4-bit hex) 
+    //    rec back aanDDD     12-bit hex  DDD
+    //
+    //   send AGWDD<cr>  write GPIO DD(8-bit hex) 
+    //    rec back agwdd   
+    //
+    //   send AGR<cr>  read GPIO 
+    //    rec back agrdd   DD(8-bit hex) 
+    //
+    //   send AI<cr>  initialize the AMC7812 with the test fixtur default configuraton
+    //    rec back ai  
+//    void writeDac(unsigned char dacNum, unsigned int value);
+//    void setConfig0(unsigned int value);
+//    void setConfig1(unsigned int value);
+//    unsigned int getConfig0(void);
+//    unsigned int getConfig1(void);
+//
+//    void setGPIO(unsigned char value);
+//    unsigned char getGPIO(void);
+//
+//    // 
+//    void initialize(void);  // initialize the device 
+//    // write given ascii chars
+//    // address 0x(RH)(RL)  -- where RH and RL are an ascii char for the register
+//    // data 0x(DH)(DH2)(DL)(DL2)  -- where DH, DH2, DL, DL2 are an ascii char for 16 bit number
+//    void writeReg16s(unsigned char RH, unsigned char RL,
+//            unsigned char DH, unsigned char DH2, unsigned char DL, unsigned char DL2);
+//    // read given ascii chars
+//    // address 0x(AH)(AL)  -- where RH and RL are an ascii char for the register
+//    unsigned int readReg16s(unsigned char RH, unsigned char RL); 
+
+    char tmp2;
+    tmp2 = getNextChar();
+    if (tmp2 == 'W') // write reg
+    {
+      // get RR
+      char tmp3;
+      tmp3 = getNextChar();
+      char tmp4;
+      tmp4 = getNextChar();
+      int tempReg = get8bitval(tmp3, tmp4); // upper 8 bits
+
+      // get DDDD
+      tmp3 = getNextChar();
+      tmp4 = getNextChar();
+      char tmp5;
+      tmp5 = getNextChar();
+      char tmp6;
+      tmp6 = getNextChar();
+      unsigned int tempData = get8bitval(tmp3, tmp4); // upper 8 bits
+      tempData<<=8;
+      tempData += get8bitval(tmp5, tmp6); // lower 8 bits
+
+      m_AMC7812_64.writeReg16(tempReg, tempData);
+
+      String regStr = conver8bitToString((unsigned char)tempReg);
+      String dataStr = conver16bitToString(tempData);
+      
+      // return response
+      String resp = "aw"+regStr+dataStr;
+      Serial.println(resp);
+    }
+    else if (tmp2 == 'R') // read reg
+    {
+      // get RR
+      char tmp3;
+      tmp3 = getNextChar();
+      char tmp4;
+      tmp4 = getNextChar();
+      int tempReg = get8bitval(tmp3, tmp4); // upper 8 bits
+      unsigned int results = m_AMC7812_64.readReg16(tempReg);
+      String regStr = conver8bitToString((unsigned char)tempReg);
+      String dataStr = conver16bitToString(results);
+      
+      // return response
+      String resp = "ar"+regStr+dataStr;
+      Serial.println(resp);      
+    }
+    else if (tmp2 == 'D') // set dac
+    {
+      // get dac number
+      char tmp3;
+      tmp3 = getNextChar();
+      unsigned char dacNum = (unsigned char) convertCharToDecimal(tmp3);
+
+      // get dac 12-bit data
+      tmp3 = getNextChar();
+      char tmp4;
+      tmp4 = getNextChar();
+      char tmp5;
+      tmp5 = getNextChar();
+      unsigned int tempData = get8bitval(tmp3, tmp4); // upper 8 bits
+      tempData<<=4;
+      tempData += get8bitval("0", tmp5); // lower 4 bits
+      unsigned int value = 0;
+      
+      m_AMC7812_64.writeDac(dacNum, value);
+      String numStr = conver4bitToString((unsigned char)dacNum);
+      String dataStr = conver12bitToString(tempData);
+      
+      // return response
+      String resp = "ad"+numStr+dataStr;
+      Serial.println(resp);
+    }
+    else if (tmp2 == 'A') // read adc        
+    {
+      char tmp3;
+      tmp3 = getNextChar();
+      unsigned char adcNum = (unsigned char) convertCharToDecimal(tmp3);
+      unsigned int tempData = m_AMC7812_64.readAdc(adcNum);
+      
+      String numStr = conver4bitToString((unsigned char)adcNum);
+      String dataStr = conver12bitToString(tempData);
+      
+      // return response
+      String resp = "aa"+numStr+dataStr;
+      Serial.println(resp);
+      
+    }
+    else if (tmp2 == 'I') // Initialize defaults
+    {
+      m_AMC7812_64.initialize();
+      Serial.println("ai");
+    }
+    else if (tmp2 == 'G') // GPIO 
+    {
+        char tmp3;
+        tmp3 = getNextChar();
+        if (tmp3 == 'W') // write GPIO
+        {
+          char tmp4;
+          tmp4 = getNextChar();
+          char tmp5;
+          tmp5 = getNextChar();
+          unsigned int tempData = get8bitval(tmp4, tmp5); // upper 8 bits
+          m_AMC7812_64.setGPIO((unsigned char) tempData);
+          String dataStr = conver8bitToString(tempData);
+          
+          // return response
+          String resp = "agw"+dataStr;
+          Serial.println(resp);
+        }
+        else if (tmp3 == 'R') // read GPIO
+        {
+          unsigned char tempData = m_AMC7812_64.getGPIO();
+          String dataStr = conver8bitToString(tempData);
+      
+          // return response
+          String resp = "agr"+dataStr;
+          Serial.println(resp);
+        }
+        else
+        {
+          Serial.println("Error GPIO");
+        }
+    }
+    else
+    {
+      // bad command
+      Serial.println("Error A command");
+    }
+
+  }// end if(tmp == 'A')
+  else if(tmp='G')  // -------------------------------- Working Here ----------------------------------------------------------
+  {
+    //MPC23017
+    //   send GWNRRDD<cr>  write device N(0-5) reg RR(8-bit hex)  with data  DD(8-bit hex) 
+    //    rec back gwnrrdd   
+    //
+    //   send GRNRR<cr>  read device N(0-5) reg RR(8-bit hex)  
+    //    rec back grnrrdd   with data  DD(8-bit hex) 
+    //
+    //   send GIN<cr>  initialize device N(0-5) with the test fixture default configuraton
+    //    rec back gin
+    //
+    //   send GARN<cr>  read device N(0-5) port A
+    //    rec back garnDD   with data  DD(8-bit hex) 
+    //
+    //   send GBRN<cr>  read device N(0-5) port B
+    //    rec back gbrnDD   with data  DD(8-bit hex) 
+    //
+    //   send GAWNDD<cr>  write device N(0-5) port A with data  DD(8-bit hex) 
+    //    rec back gawnDD   
+    //
+    //   send GBWNDD<cr>  read device N(0-5) port B with data  DD(8-bit hex) 
+    //    rec back gbwnDD  
+    char tmp2;
+    tmp2 = getNextChar();
+    if (tmp2 == 'W') // write reg
+    {
+      char tmp3;
+      tmp3 = getNextChar(); // 
+    }
+    else if (tmp2 == 'R') // read reg
+    {
+      
+    }
+    else if (tmp2 == 'I') // Initialize
+    {
+      
+    }
+    else if (tmp2 == 'A') // Port A
+    {
+      char tmp3;
+      tmp3 = getNextChar();
+      if (tmp3 == 'W') // write port A
+      {
+        
+      }
+      else if (tmp3 == 'R') // read port A
+      {
+        
+      }
+      else
+      {
+        Serial.println("Error GA command");
+      }
+    }
+    else if (tmp2 == 'B') // Port B
+    {
+      char tmp3;
+      tmp3 = getNextChar();
+      if (tmp3 == 'W') // write port B
+      {
+        
+      }
+      else if (tmp3 == 'R') // read port B
+      {
+        
+      }
+      else
+      {
+        Serial.println("Error GB command");
+      }      
+    }
+    else // Bad
+    {
+      Serial.println("Error G command");
+    }
+    
+  }// end else if(tmp='G')
+  else if(tmp == 'S')
+  {
+      Serial.print("found SPI comand ");
+      char tmp2;
       while(true)
       {
         tmp = getNextChar();
