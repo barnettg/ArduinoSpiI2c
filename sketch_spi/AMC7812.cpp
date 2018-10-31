@@ -1,7 +1,12 @@
 // cpp file for AMC7812
 #include "AMC7812.h"
 
-AMC7812::AMC7812(unsigned char I2C_address)
+AMC7812::AMC7812()
+{
+ // cannot have code before setup()
+}
+
+void AMC7812::start(unsigned char I2C_address)
 {
   _I2C_address = I2C_address;  
   initialize();

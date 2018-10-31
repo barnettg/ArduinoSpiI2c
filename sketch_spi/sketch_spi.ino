@@ -2,7 +2,6 @@
 // May 16, 2018
 
 #include <SPI.h>
-//#include <Wire.h>
 #include <Wire.h>
 #include <Adafruit_MCP4725.h>
 #include "MCP23017.h"
@@ -142,51 +141,46 @@ const int chipSelectPin = 7;
 //MCP23017 *m_MCP23017_24; //(CMCP23017::Base4);
 //
 //AMC7812 *m_AMC7812_64;
-
-MCP23017 m_MCP23017_20(MCP23017::Base0, MCP23017::DIN,  MCP23017::DIN);
-MCP23017 m_MCP23017_21(MCP23017::Base1, MCP23017::DOUT, MCP23017::DOUT);
-MCP23017 m_MCP23017_22(MCP23017::Base2, MCP23017::DIN,  MCP23017::DIN);
-MCP23017 m_MCP23017_23(MCP23017::Base3, MCP23017::DOUT, MCP23017::DIN);
-MCP23017 m_MCP23017_24(MCP23017::Base4, MCP23017::DOUT, MCP23017::DIN);
-AMC7812 m_AMC7812_64(0x64);
+// these:
+MCP23017 m_MCP23017_20;
+MCP23017 m_MCP23017_21;
+MCP23017 m_MCP23017_22;
+MCP23017 m_MCP23017_23;
+MCP23017 m_MCP23017_24;
+AMC7812 m_AMC7812_64;
   
-
+char inChar;
 void setup() {
   Serial.begin(57600);
   while (!Serial);
+  Serial.println("Starting... ");
 
+  m_MCP23017_20.start(MCP23017::Base0, MCP23017::DIN,  MCP23017::DIN);
+  m_MCP23017_21.start(MCP23017::Base1, MCP23017::DOUT, MCP23017::DOUT);
+  m_MCP23017_22.start(MCP23017::Base2, MCP23017::DIN,  MCP23017::DIN);
+  m_MCP23017_23.start(MCP23017::Base3, MCP23017::DOUT, MCP23017::DIN);
+  m_MCP23017_24.start(MCP23017::Base4, MCP23017::DOUT, MCP23017::DIN);
+  m_AMC7812_64.start(0x64);
+  
   // start the SPI library:
-  SPI.begin();
-  pinMode(chipSelectPin, OUTPUT);
-  pinMode(SS, OUTPUT);
-  digitalWrite(chipSelectPin, HIGH);
+//  SPI.begin();
+//  pinMode(chipSelectPin, OUTPUT);
+//  pinMode(SS, OUTPUT);
+//  digitalWrite(chipSelectPin, HIGH);
   //SPI.beginTransaction(SPISettings(14000000, MSBFIRST, SPI_MODE0)); // 8MHz clock
 
-
   //default too
-  SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0)); // 4MHz clock 
+//  SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0)); // 4MHz clock 
   // data out changes on clack fall, there is a clock rise in centr of data
   // to transfer 3 bytes is 12.5us- ~ 1us between bytes- 3us from last data clock to cs rise
 
   // For Adafruit MCP4725A1 the address is 0x62 (default) or 0x63 (ADDR pin tied to VCC)
-  dac.begin(0x62);
+//  dac.begin(0x62);
   //dac.setVoltage(1024, false); // should set to 1/4 voltage
-  
-  Serial.print("Starting... ");
-
-
-//   m_MCP23017_20 = new MCP23017(MCP23017::Base0, MCP23017::DIN,  MCP23017::DIN);
-//   m_MCP23017_21 = new MCP23017(MCP23017::Base1, MCP23017::DOUT, MCP23017::DOUT);
-//   m_MCP23017_22 = new MCP23017(MCP23017::Base2, MCP23017::DIN,  MCP23017::DIN);
-//   m_MCP23017_23 = new MCP23017(MCP23017::Base3, MCP23017::DOUT, MCP23017::DIN);
-//   m_MCP23017_24 = new MCP23017(MCP23017::Base4, MCP23017::DOUT, MCP23017::DIN);
-//
-//   m_AMC7812_64 = new AMC7812(0x64);
-
 }
 
 void loop() {
-    char inChar;
+
   if(Serial.available())
   {
     inChar = (char)Serial.read();
@@ -215,8 +209,6 @@ void loop() {
     // purge buffer
       serialBottom = serialTop;
   }
-
-  
 
 }// end loop
 
@@ -445,7 +437,7 @@ String conver16bitToString(unsigned int val)
 void decodeSerial()
 {
   char tmp;
-    
+  //Serial.print("decode  "); // ---------------------------------------------------------------
   int txrxbuff[20];
   char buffSize = 0; 
 /*
@@ -476,7 +468,7 @@ void decodeSerial()
       //Serial.print("temp16: ");
       //Serial.println(temp16, HEX);
       
-      dac.setVoltage(temp16, false); // 
+//      dac.setVoltage(temp16, false); // 
 
       uint8_t convTop4 = (uint8_t) ( (temp16 >> 8) & 0xF);
       uint8_t convMid4 = (uint8_t) ( (temp16 >> 4) & 0xF);
@@ -569,7 +561,7 @@ void decodeSerial()
       tempData<<=8;
       tempData += get8bitval(tmp5, tmp6); // lower 8 bits
 
-      m_AMC7812_64.writeReg16(tempReg, tempData);
+//      m_AMC7812_64.writeReg16(tempReg, tempData);
 
       String regStr = conver8bitToString((unsigned char)tempReg);
       String dataStr = conver16bitToString(tempData);
@@ -586,7 +578,8 @@ void decodeSerial()
       char tmp4;
       tmp4 = getNextChar();
       int tempReg = get8bitval(tmp3, tmp4); // upper 8 bits
-      unsigned int results = m_AMC7812_64.readReg16(tempReg);
+      unsigned int results = 0;
+//      results = m_AMC7812_64.readReg16(tempReg);
       String regStr = conver8bitToString((unsigned char)tempReg);
       String dataStr = conver16bitToString(results);
       
@@ -607,14 +600,18 @@ void decodeSerial()
       tmp4 = getNextChar();
       char tmp5;
       tmp5 = getNextChar();
-      unsigned int tempData = get8bitval(tmp3, tmp4); // upper 8 bits
+      unsigned int tempData = get8bitval(tmp3, tmp4); // upper 8 bits   /// error here ???????????????????????
+      //Serial.println(conver8bitToString(tempData));
+      
       tempData<<=4;
-      tempData += get8bitval("0", tmp5); // lower 4 bits
+      unsigned int tempData2 = get8bitval('0', tmp5);
+      //Serial.println(conver8bitToString(tempData2));
+      tempData += get8bitval('0', tmp5); // lower 4 bits   /// error here ???????????????????????
       unsigned int value = 0;
       
-      m_AMC7812_64.writeDac(dacNum, value);
+//      m_AMC7812_64.writeDac(dacNum, value);
       String numStr = conver4bitToString((unsigned char)dacNum);
-      String dataStr = conver12bitToString(tempData);
+      String dataStr = conver12bitToString(tempData);    /// error here ???????????????????????
       
       // return response
       String resp = "ad"+numStr+dataStr;
@@ -625,7 +622,8 @@ void decodeSerial()
       char tmp3;
       tmp3 = getNextChar();
       unsigned char adcNum = (unsigned char) convertCharToDecimal(tmp3);
-      unsigned int tempData = m_AMC7812_64.readAdc(adcNum);
+      unsigned int tempData = 0;
+      //tempData = m_AMC7812_64.readAdc(adcNum);
       
       String numStr = conver4bitToString((unsigned char)adcNum);
       String dataStr = conver12bitToString(tempData);
@@ -637,7 +635,7 @@ void decodeSerial()
     }
     else if (tmp2 == 'I') // Initialize defaults
     {
-      m_AMC7812_64.initialize();
+ //     m_AMC7812_64.initialize();
       Serial.println("ai");
     }
     else if (tmp2 == 'G') // GPIO 
@@ -651,7 +649,7 @@ void decodeSerial()
           char tmp5;
           tmp5 = getNextChar();
           unsigned int tempData = get8bitval(tmp4, tmp5); // upper 8 bits
-          m_AMC7812_64.setGPIO((unsigned char) tempData);
+//          m_AMC7812_64.setGPIO((unsigned char) tempData);
           String dataStr = conver8bitToString(tempData);
           
           // return response
@@ -660,7 +658,8 @@ void decodeSerial()
         }
         else if (tmp3 == 'R') // read GPIO
         {
-          unsigned char tempData = m_AMC7812_64.getGPIO();
+          unsigned char tempData = 0;
+          //tempData = m_AMC7812_64.getGPIO();
           String dataStr = conver8bitToString(tempData);
       
           // return response
@@ -679,7 +678,7 @@ void decodeSerial()
     }
 
   }// end if(tmp == 'A')
-  else if(tmp='G')  // -------------------------------- Working Here ----------------------------------------------------------
+  else if(tmp='G')  
   {
     //MPC23017
     //   send GWNRRDD<cr>  write device N(0-5) reg RR(8-bit hex)  with data  DD(8-bit hex) 
@@ -704,48 +703,274 @@ void decodeSerial()
     //    rec back gbwnDD  
     char tmp2;
     tmp2 = getNextChar();
-    if (tmp2 == 'W') // write reg
+    if (tmp2 == 'W') // write reg   
     {
       char tmp3;
-      tmp3 = getNextChar(); // 
+      tmp3 = getNextChar(); // device number
+      unsigned char deviceNum = (unsigned char) convertCharToDecimal(tmp3);
+
+      // get register
+      tmp3 = getNextChar();
+      char tmp4;
+      tmp4 = getNextChar();
+      unsigned char tempReg = get8bitval(tmp3, tmp4); //  8 bits
+      
+      // get data
+      tmp3 = getNextChar();
+      tmp4 = getNextChar();
+      unsigned char tempData = get8bitval(tmp3, tmp4); //  8 bits
+      switch (deviceNum)
+      {
+        case 0:
+//          m_MCP23017_20.writeReg(tempReg, tempData);
+          break;
+        case 1:
+//          m_MCP23017_21.writeReg(tempReg, tempData);
+          break;
+        case 2:
+//          m_MCP23017_22.writeReg(tempReg, tempData);
+          break;
+        case 3:
+//          m_MCP23017_23.writeReg(tempReg, tempData);
+          break;
+        case 4:
+//          m_MCP23017_24.writeReg(tempReg, tempData);
+          break;
+        default:
+          break;
+      }
+      String deviceStr = conver4bitToString(deviceNum);
+      String regStr = conver8bitToString(tempReg);
+      String dataStr = conver8bitToString(tempData);      
+      // return response
+      String resp = "gw" + deviceStr + regStr + dataStr;
+      Serial.println(resp);
     }
-    else if (tmp2 == 'R') // read reg
+    else if (tmp2 == 'R') // read reg  
     {
+      char tmp3;
+      tmp3 = getNextChar(); // device number
+      unsigned char deviceNum = (unsigned char) convertCharToDecimal(tmp3);
+
+      // get register
+      tmp3 = getNextChar();
+      char tmp4;
+      tmp4 = getNextChar();
+      unsigned char tempReg = get8bitval(tmp3, tmp4); //  8 bits
+      unsigned char tempData = 0;
+      switch (deviceNum)
+      {
+        case 0:
+//          tempData = m_MCP23017_20.readReg(tempReg);
+          break;
+        case 1:
+//          tempData = m_MCP23017_21.readReg(tempReg);
+          break;
+        case 2:
+//          tempData = m_MCP23017_22.readReg(tempReg);
+          break;
+        case 3:
+//          tempData = m_MCP23017_23.readReg(tempReg);
+          break;
+        case 4:
+//          tempData = m_MCP23017_24.readReg(tempReg);
+          break;
+        default:
+          break;
+      }
+      String deviceStr = conver4bitToString(deviceNum);
+      String regStr = conver8bitToString(tempReg);
+      String dataStr = conver8bitToString(tempData);      
+      // return response
+      String resp = "gr" + deviceStr + regStr + dataStr;
+      Serial.println(resp);
       
     }
-    else if (tmp2 == 'I') // Initialize
+    else if (tmp2 == 'I') // Initialize  
     {
-      
+      char tmp3;
+      tmp3 = getNextChar(); // device number
+      unsigned char deviceNum = (unsigned char) convertCharToDecimal(tmp3);
+
+      switch (deviceNum)
+      {
+        case 0:
+//          m_MCP23017_20.initialize();
+          break;
+        case 1:
+//          m_MCP23017_21.initialize();
+          break;
+        case 2:
+//          m_MCP23017_22.initialize();
+          break;
+        case 3:
+//          m_MCP23017_23.initialize();
+          break;
+        case 4:
+//          m_MCP23017_24.initialize();
+          break;
+        default:
+          break;
+      }     
+      String deviceStr = conver4bitToString(deviceNum);  
+      // return response
+      String resp = "gi" + deviceStr;
+      Serial.println(resp);
     }
-    else if (tmp2 == 'A') // Port A
+    else if (tmp2 == 'A') // Port A 
     {
       char tmp3;
       tmp3 = getNextChar();
       if (tmp3 == 'W') // write port A
       {
-        
+        char tmp4;
+        tmp4 = getNextChar(); // device number
+        unsigned char deviceNum = (unsigned char) convertCharToDecimal(tmp4);
+  
+        // get data
+        tmp4 = getNextChar();
+        char tmp5;
+        tmp5 = getNextChar();
+        unsigned char tempData = get8bitval(tmp4, tmp5); //  8 bits
+        switch (deviceNum)
+        {
+          case 0:
+//            m_MCP23017_20.writePortA(tempData);
+            break;
+          case 1:
+//            m_MCP23017_21.writePortA(tempData);
+            break;
+          case 2:
+//            m_MCP23017_22.writePortA(tempData);
+            break;
+          case 3:
+ //           m_MCP23017_23.writePortA(tempData);
+            break;
+          case 4:
+//            m_MCP23017_24.writePortA(tempData);
+            break;
+          default:
+            break;
+        }
+        String deviceStr = conver4bitToString(deviceNum);
+        String dataStr = conver8bitToString(tempData);      
+        // return response
+        String resp = "gaw" + deviceStr + dataStr;
+        Serial.println(resp);
+      
       }
       else if (tmp3 == 'R') // read port A
       {
-        
+        char tmp4;
+        tmp4 = getNextChar(); // device number
+        unsigned char deviceNum = (unsigned char) convertCharToDecimal(tmp4);
+  
+        unsigned char tempData = 0;
+        switch (deviceNum)
+        {
+          case 0:
+//            tempData = m_MCP23017_20.readPortA();
+            break;
+          case 1:
+ //           tempData = m_MCP23017_21.readPortA();
+            break;
+          case 2:
+//            tempData = m_MCP23017_22.readPortA();
+            break;
+          case 3:
+//            tempData = m_MCP23017_23.readPortA();
+            break;
+          case 4:
+//            tempData = m_MCP23017_24.readPortA();
+            break;
+          default:
+            break;
+        }
+        String deviceStr = conver4bitToString(deviceNum);
+        String dataStr = conver8bitToString(tempData);      
+        // return response
+        String resp = "gar" + deviceStr + dataStr;
+        Serial.println(resp);
       }
       else
       {
         Serial.println("Error GA command");
       }
     }
-    else if (tmp2 == 'B') // Port B
+    else if (tmp2 == 'B') // Port B 
     {
       char tmp3;
       tmp3 = getNextChar();
       if (tmp3 == 'W') // write port B
       {
-        
+        char tmp4;
+        tmp4 = getNextChar(); // device number
+        unsigned char deviceNum = (unsigned char) convertCharToDecimal(tmp4);
+  
+        // get data
+        tmp4 = getNextChar();
+        char tmp5;
+        tmp5 = getNextChar();
+        unsigned char tempData = get8bitval(tmp4, tmp5); //  8 bits
+        switch (deviceNum)
+        {
+          case 0:
+//            m_MCP23017_20.writePortB(tempData);
+            break;
+          case 1:
+//            m_MCP23017_21.writePortB(tempData);
+            break;
+          case 2:
+//            m_MCP23017_22.writePortB(tempData);
+            break;
+          case 3:
+//            m_MCP23017_23.writePortB(tempData);
+            break;
+          case 4:
+//            m_MCP23017_24.writePortB(tempData);
+            break;
+          default:
+            break;
+        }
+        String deviceStr = conver4bitToString(deviceNum);
+        String dataStr = conver8bitToString(tempData);      
+        // return response
+        String resp = "gbw" + deviceStr + dataStr;
+        Serial.println(resp);        
       }
       else if (tmp3 == 'R') // read port B
       {
-        
-      }
+         char tmp4;
+        tmp4 = getNextChar(); // device number
+        unsigned char deviceNum = (unsigned char) convertCharToDecimal(tmp4);
+  
+        unsigned char tempData = 0;
+        switch (deviceNum)
+        {
+          case 0:
+ //           tempData = m_MCP23017_20.readPortB();
+            break;
+          case 1:
+//            tempData = m_MCP23017_21.readPortB();
+            break;
+          case 2:
+//            tempData = m_MCP23017_22.readPortB();
+            break;
+          case 3:
+//            tempData = m_MCP23017_23.readPortB();
+            break;
+          case 4:
+//            tempData = m_MCP23017_24.readPortB();
+            break;
+          default:
+            break;
+        }
+        String deviceStr = conver4bitToString(deviceNum);
+        String dataStr = conver8bitToString(tempData);      
+        // return response
+        String resp = "gbr" + deviceStr + dataStr;
+        Serial.println(resp);
+      } 
       else
       {
         Serial.println("Error GB command");
@@ -785,9 +1010,9 @@ void decodeSerial()
       digitalWrite(chipSelectPin, LOW);
       //digitalWrite(SS, LOW);
       //delay(1);
-      SPI.transfer(txrxbuff[0]);       // address
-      result1 = SPI.transfer(txrxbuff[1]);    // data msb
-      result2 = SPI.transfer(txrxbuff[2]);    // data LSB
+//      SPI.transfer(txrxbuff[0]);       // address
+//      result1 = SPI.transfer(txrxbuff[1]);    // data msb
+//      result2 = SPI.transfer(txrxbuff[2]);    // data LSB
       //delay(1);
       digitalWrite(chipSelectPin, HIGH);
       //digitalWrite(SS, HIGH);

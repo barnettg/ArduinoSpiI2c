@@ -3,50 +3,57 @@
 #include "MCP23017.h"
 
 
-MCP23017::MCP23017(unsigned char I2C_address,unsigned char portAdir, unsigned char portBdir)
+MCP23017::MCP23017()
+{
+  // cannot have code before setup()
+}
+
+void MCP23017::start(unsigned char I2C_address,unsigned char portAdir, unsigned char portBdir)
 {
   _I2C_address = I2C_address;  
-  initialize(portAdir, portBdir);
+  _portaDir = portAdir;
+  _portbDir = portBdir;
+  initialize();
 }
 
 void MCP23017::writeReg(unsigned char reg, unsigned char data)
 {
-  Wire.beginTransmission(_I2C_address);
-  Wire.write(reg);
-  Wire.write(data);   
-  Wire.endTransmission();
+//  Wire.beginTransmission(_I2C_address);
+//  Wire.write(reg);
+//  Wire.write(data);   
+//  Wire.endTransmission();
 }
 int MCP23017::readReg(unsigned char reg)
 {
   unsigned char result=0;
-  Wire.beginTransmission(_I2C_address);
-  Wire.write(reg);
-  Wire.endTransmission();
-  Wire.requestFrom((uint8_t)_I2C_address,(uint8_t)1);
-  //delay(10); // wait 10 ms
-  if(Wire.available()>0)
-  {
-    result = Wire.read(); //
-    return (int) result;
-  }
-  
+//  Wire.beginTransmission(_I2C_address);
+//  Wire.write(reg);
+//  Wire.endTransmission();
+//  Wire.requestFrom((uint8_t)_I2C_address,(uint8_t)1);
+//  //delay(10); // wait 10 ms
+//  if(Wire.available()>0)
+//  {
+//    result = Wire.read(); //
+//    return (int) result;
+//  }
+//  
 	return -1;
 }  
 
-void MCP23017::initialize(unsigned char portAdir, unsigned char portBdir)
+void MCP23017::initialize(void)
 {
    // set up port A 
-   writeReg(IODIRA, portAdir);
+   writeReg(IODIRA, _portaDir);
    
     // set up port B  
-   writeReg(IODIRB, portBdir);
+   writeReg(IODIRB, _portbDir);
    delay(100); // wait 100 ms
       
    // set port B
-   writeReg(GPIOB, 0xFF);
+//   writeReg(GPIOB, 0xFF);
    // set port A
-   writeReg(GPIOA, 0xFF);
-   delay(100); // wait 100 ms
+//   writeReg(GPIOA, 0xFF);
+//   delay(100); // wait 100 ms
 }
 
 unsigned char MCP23017::readPortA(void)

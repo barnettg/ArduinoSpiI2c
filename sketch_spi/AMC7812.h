@@ -1,10 +1,14 @@
 // header file for AMC7812
 #ifndef __AMC7812__H_
 #define __AMC7812__H_
+
+#include <Wire.h>
+
 class AMC7812
 {
   public:
-    AMC7812(unsigned char I2C_address);
+    AMC7812();
+    void start(unsigned char I2C_address);
     // I2C methods
     void writeReg16(int reg, unsigned int data);
     unsigned int readReg16(int reg);

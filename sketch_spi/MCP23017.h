@@ -6,12 +6,13 @@
 class MCP23017
 {
   public:
-    MCP23017(unsigned char I2C_address,unsigned char portAdir, unsigned char portBdir);
+    MCP23017();
+    void start(unsigned char I2C_address,unsigned char portAdir, unsigned char portBdir);
     // I2C methods
     void writeReg(unsigned char reg, unsigned char data);
     int readReg(unsigned char reg);  
 
-	void initialize(unsigned char portAdir, unsigned char portBdir);
+	void initialize(void);
 	
 	unsigned char readPortA(void);
 	unsigned char readPortB(void);
@@ -71,6 +72,8 @@ class MCP23017
     
   private:
    unsigned char _I2C_address;
+   unsigned char _portaDir;
+   unsigned char _portbDir;
 };
 
 #endif
