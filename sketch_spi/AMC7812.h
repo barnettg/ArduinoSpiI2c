@@ -30,11 +30,11 @@ class AMC7812
     // write given ascii chars
     // address 0x(RH)(RL)  -- where RH and RL are an ascii char for the register
     // data 0x(DH)(DH2)(DL)(DL2)  -- where DH, DH2, DL, DL2 are an ascii char for 16 bit number
-    void writeReg16s(unsigned char RH, unsigned char RL,
-            unsigned char DH, unsigned char DH2, unsigned char DL, unsigned char DL2);
-    // read given ascii chars
-    // address 0x(AH)(AL)  -- where RH and RL are an ascii char for the register
-    unsigned int readReg16s(unsigned char RH, unsigned char RL);            
+//    void writeReg16s(unsigned char RH, unsigned char RL,
+//            unsigned char DH, unsigned char DH2, unsigned char DL, unsigned char DL2);
+//    // read given ascii chars
+//    // address 0x(AH)(AL)  -- where RH and RL are an ascii char for the register
+//    unsigned int readReg16s(unsigned char RH, unsigned char RL);            
     
   private:
    unsigned char _I2C_address;

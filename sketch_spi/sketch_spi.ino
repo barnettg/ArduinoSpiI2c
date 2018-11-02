@@ -437,7 +437,7 @@ String conver16bitToString(unsigned int val)
 void decodeSerial()
 {
   char tmp;
-  //Serial.print("decode  "); // ---------------------------------------------------------------
+  //Serial.print("decode  "); // --
   int txrxbuff[20];
   char buffSize = 0; 
 /*
@@ -468,7 +468,7 @@ void decodeSerial()
       //Serial.print("temp16: ");
       //Serial.println(temp16, HEX);
       
-//      dac.setVoltage(temp16, false); // 
+      dac.setVoltage(temp16, false); // 
 
       uint8_t convTop4 = (uint8_t) ( (temp16 >> 8) & 0xF);
       uint8_t convMid4 = (uint8_t) ( (temp16 >> 4) & 0xF);
@@ -519,25 +519,6 @@ void decodeSerial()
     //
     //   send AI<cr>  initialize the AMC7812 with the test fixtur default configuraton
     //    rec back ai  
-//    void writeDac(unsigned char dacNum, unsigned int value);
-//    void setConfig0(unsigned int value);
-//    void setConfig1(unsigned int value);
-//    unsigned int getConfig0(void);
-//    unsigned int getConfig1(void);
-//
-//    void setGPIO(unsigned char value);
-//    unsigned char getGPIO(void);
-//
-//    // 
-//    void initialize(void);  // initialize the device 
-//    // write given ascii chars
-//    // address 0x(RH)(RL)  -- where RH and RL are an ascii char for the register
-//    // data 0x(DH)(DH2)(DL)(DL2)  -- where DH, DH2, DL, DL2 are an ascii char for 16 bit number
-//    void writeReg16s(unsigned char RH, unsigned char RL,
-//            unsigned char DH, unsigned char DH2, unsigned char DL, unsigned char DL2);
-//    // read given ascii chars
-//    // address 0x(AH)(AL)  -- where RH and RL are an ascii char for the register
-//    unsigned int readReg16s(unsigned char RH, unsigned char RL); 
 
     char tmp2;
     tmp2 = getNextChar();
@@ -561,7 +542,7 @@ void decodeSerial()
       tempData<<=8;
       tempData += get8bitval(tmp5, tmp6); // lower 8 bits
 
-//      m_AMC7812_64.writeReg16(tempReg, tempData);
+      m_AMC7812_64.writeReg16(tempReg, tempData);
 
       String regStr = conver8bitToString((unsigned char)tempReg);
       String dataStr = conver16bitToString(tempData);
@@ -579,7 +560,7 @@ void decodeSerial()
       tmp4 = getNextChar();
       int tempReg = get8bitval(tmp3, tmp4); // upper 8 bits
       unsigned int results = 0;
-//      results = m_AMC7812_64.readReg16(tempReg);
+      results = m_AMC7812_64.readReg16(tempReg);
       String regStr = conver8bitToString((unsigned char)tempReg);
       String dataStr = conver16bitToString(results);
       
@@ -609,7 +590,7 @@ void decodeSerial()
       tempData += get8bitval('0', tmp5); // lower 4 bits   /// error here ???????????????????????
       unsigned int value = 0;
       
-//      m_AMC7812_64.writeDac(dacNum, value);
+      m_AMC7812_64.writeDac(dacNum, value);
       String numStr = conver4bitToString((unsigned char)dacNum);
       String dataStr = conver12bitToString(tempData);    /// error here ???????????????????????
       
@@ -623,7 +604,7 @@ void decodeSerial()
       tmp3 = getNextChar();
       unsigned char adcNum = (unsigned char) convertCharToDecimal(tmp3);
       unsigned int tempData = 0;
-      //tempData = m_AMC7812_64.readAdc(adcNum);
+      tempData = m_AMC7812_64.readAdc(adcNum);
       
       String numStr = conver4bitToString((unsigned char)adcNum);
       String dataStr = conver12bitToString(tempData);
@@ -635,7 +616,7 @@ void decodeSerial()
     }
     else if (tmp2 == 'I') // Initialize defaults
     {
- //     m_AMC7812_64.initialize();
+      m_AMC7812_64.initialize();
       Serial.println("ai");
     }
     else if (tmp2 == 'G') // GPIO 
@@ -649,7 +630,7 @@ void decodeSerial()
           char tmp5;
           tmp5 = getNextChar();
           unsigned int tempData = get8bitval(tmp4, tmp5); // upper 8 bits
-//          m_AMC7812_64.setGPIO((unsigned char) tempData);
+          m_AMC7812_64.setGPIO((unsigned char) tempData);
           String dataStr = conver8bitToString(tempData);
           
           // return response
@@ -659,7 +640,7 @@ void decodeSerial()
         else if (tmp3 == 'R') // read GPIO
         {
           unsigned char tempData = 0;
-          //tempData = m_AMC7812_64.getGPIO();
+          tempData = m_AMC7812_64.getGPIO();
           String dataStr = conver8bitToString(tempData);
       
           // return response
@@ -722,19 +703,19 @@ void decodeSerial()
       switch (deviceNum)
       {
         case 0:
-//          m_MCP23017_20.writeReg(tempReg, tempData);
+          m_MCP23017_20.writeReg(tempReg, tempData);
           break;
         case 1:
-//          m_MCP23017_21.writeReg(tempReg, tempData);
+          m_MCP23017_21.writeReg(tempReg, tempData);
           break;
         case 2:
-//          m_MCP23017_22.writeReg(tempReg, tempData);
+          m_MCP23017_22.writeReg(tempReg, tempData);
           break;
         case 3:
-//          m_MCP23017_23.writeReg(tempReg, tempData);
+          m_MCP23017_23.writeReg(tempReg, tempData);
           break;
         case 4:
-//          m_MCP23017_24.writeReg(tempReg, tempData);
+          m_MCP23017_24.writeReg(tempReg, tempData);
           break;
         default:
           break;
@@ -761,19 +742,19 @@ void decodeSerial()
       switch (deviceNum)
       {
         case 0:
-//          tempData = m_MCP23017_20.readReg(tempReg);
+          tempData = m_MCP23017_20.readReg(tempReg);
           break;
         case 1:
-//          tempData = m_MCP23017_21.readReg(tempReg);
+          tempData = m_MCP23017_21.readReg(tempReg);
           break;
         case 2:
-//          tempData = m_MCP23017_22.readReg(tempReg);
+          tempData = m_MCP23017_22.readReg(tempReg);
           break;
         case 3:
-//          tempData = m_MCP23017_23.readReg(tempReg);
+          tempData = m_MCP23017_23.readReg(tempReg);
           break;
         case 4:
-//          tempData = m_MCP23017_24.readReg(tempReg);
+          tempData = m_MCP23017_24.readReg(tempReg);
           break;
         default:
           break;
@@ -795,19 +776,19 @@ void decodeSerial()
       switch (deviceNum)
       {
         case 0:
-//          m_MCP23017_20.initialize();
+          m_MCP23017_20.initialize();
           break;
         case 1:
-//          m_MCP23017_21.initialize();
+          m_MCP23017_21.initialize();
           break;
         case 2:
-//          m_MCP23017_22.initialize();
+          m_MCP23017_22.initialize();
           break;
         case 3:
-//          m_MCP23017_23.initialize();
+          m_MCP23017_23.initialize();
           break;
         case 4:
-//          m_MCP23017_24.initialize();
+          m_MCP23017_24.initialize();
           break;
         default:
           break;
@@ -835,19 +816,19 @@ void decodeSerial()
         switch (deviceNum)
         {
           case 0:
-//            m_MCP23017_20.writePortA(tempData);
+            m_MCP23017_20.writePortA(tempData);
             break;
           case 1:
-//            m_MCP23017_21.writePortA(tempData);
+            m_MCP23017_21.writePortA(tempData);
             break;
           case 2:
-//            m_MCP23017_22.writePortA(tempData);
+            m_MCP23017_22.writePortA(tempData);
             break;
           case 3:
- //           m_MCP23017_23.writePortA(tempData);
+            m_MCP23017_23.writePortA(tempData);
             break;
           case 4:
-//            m_MCP23017_24.writePortA(tempData);
+            m_MCP23017_24.writePortA(tempData);
             break;
           default:
             break;
@@ -869,19 +850,19 @@ void decodeSerial()
         switch (deviceNum)
         {
           case 0:
-//            tempData = m_MCP23017_20.readPortA();
+            tempData = m_MCP23017_20.readPortA();
             break;
           case 1:
- //           tempData = m_MCP23017_21.readPortA();
+            tempData = m_MCP23017_21.readPortA();
             break;
           case 2:
-//            tempData = m_MCP23017_22.readPortA();
+            tempData = m_MCP23017_22.readPortA();
             break;
           case 3:
-//            tempData = m_MCP23017_23.readPortA();
+            tempData = m_MCP23017_23.readPortA();
             break;
           case 4:
-//            tempData = m_MCP23017_24.readPortA();
+            tempData = m_MCP23017_24.readPortA();
             break;
           default:
             break;
@@ -915,19 +896,19 @@ void decodeSerial()
         switch (deviceNum)
         {
           case 0:
-//            m_MCP23017_20.writePortB(tempData);
+            m_MCP23017_20.writePortB(tempData);
             break;
           case 1:
-//            m_MCP23017_21.writePortB(tempData);
+            m_MCP23017_21.writePortB(tempData);
             break;
           case 2:
-//            m_MCP23017_22.writePortB(tempData);
+            m_MCP23017_22.writePortB(tempData);
             break;
           case 3:
-//            m_MCP23017_23.writePortB(tempData);
+            m_MCP23017_23.writePortB(tempData);
             break;
           case 4:
-//            m_MCP23017_24.writePortB(tempData);
+            m_MCP23017_24.writePortB(tempData);
             break;
           default:
             break;
@@ -948,19 +929,19 @@ void decodeSerial()
         switch (deviceNum)
         {
           case 0:
- //           tempData = m_MCP23017_20.readPortB();
+            tempData = m_MCP23017_20.readPortB();
             break;
           case 1:
-//            tempData = m_MCP23017_21.readPortB();
+            tempData = m_MCP23017_21.readPortB();
             break;
           case 2:
-//            tempData = m_MCP23017_22.readPortB();
+            tempData = m_MCP23017_22.readPortB();
             break;
           case 3:
-//            tempData = m_MCP23017_23.readPortB();
+            tempData = m_MCP23017_23.readPortB();
             break;
           case 4:
-//            tempData = m_MCP23017_24.readPortB();
+            tempData = m_MCP23017_24.readPortB();
             break;
           default:
             break;

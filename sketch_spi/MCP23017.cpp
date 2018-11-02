@@ -10,6 +10,7 @@ MCP23017::MCP23017()
 
 void MCP23017::start(unsigned char I2C_address,unsigned char portAdir, unsigned char portBdir)
 {
+  Wire.begin();
   _I2C_address = I2C_address;  
   _portaDir = portAdir;
   _portbDir = portBdir;
@@ -18,25 +19,25 @@ void MCP23017::start(unsigned char I2C_address,unsigned char portAdir, unsigned 
 
 void MCP23017::writeReg(unsigned char reg, unsigned char data)
 {
-//  Wire.beginTransmission(_I2C_address);
-//  Wire.write(reg);
-//  Wire.write(data);   
-//  Wire.endTransmission();
+  Wire.beginTransmission(_I2C_address);
+  Wire.write(reg);
+  Wire.write(data);   
+  Wire.endTransmission();
 }
 int MCP23017::readReg(unsigned char reg)
 {
   unsigned char result=0;
-//  Wire.beginTransmission(_I2C_address);
-//  Wire.write(reg);
-//  Wire.endTransmission();
-//  Wire.requestFrom((uint8_t)_I2C_address,(uint8_t)1);
-//  //delay(10); // wait 10 ms
-//  if(Wire.available()>0)
-//  {
-//    result = Wire.read(); //
-//    return (int) result;
-//  }
-//  
+  Wire.beginTransmission(_I2C_address);
+  Wire.write(reg);
+  Wire.endTransmission();
+  Wire.requestFrom((uint8_t)_I2C_address,(uint8_t)1);
+  //delay(10); // wait 10 ms
+  if(Wire.available()>0)
+  {
+    result = Wire.read(); //
+    return (int) result;
+  }
+  
 	return -1;
 }  
 
@@ -50,9 +51,9 @@ void MCP23017::initialize(void)
    delay(100); // wait 100 ms
       
    // set port B
-//   writeReg(GPIOB, 0xFF);
+   writeReg(GPIOB, 0xFF);
    // set port A
-//   writeReg(GPIOA, 0xFF);
+   writeReg(GPIOA, 0xFF);
 //   delay(100); // wait 100 ms
 }
 

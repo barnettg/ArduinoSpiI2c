@@ -1,2 +1,2 @@
 git add -A
-git commit -m "serial port working with GUI"
+git commit -m "AMC7812 class working on I2C"
