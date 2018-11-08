@@ -1,2 +1,2 @@
 git add -A
-git commit -m "AMC7812 class working on I2C"
+git commit -m "Add MPC23017 bit rd and wr communications"

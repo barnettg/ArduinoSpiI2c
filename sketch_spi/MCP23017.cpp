@@ -79,7 +79,7 @@ void MCP23017::writePortB(unsigned char value)
 ///
 /// @param bit number 0-7
 /// @return bit value
-bool MCP23017::readPortaBit(int bitNumber)
+bool MCP23017::readPortaBit(unsigned char bitNumber)
 {
    int val = readPortA();
    int mask = 0x01 << (bitNumber & (0x7));
@@ -91,7 +91,7 @@ bool MCP23017::readPortaBit(int bitNumber)
 ///
 /// @param bit number 0-7
 /// @return bit value
-bool MCP23017::readPortbBit(int bitNumber)
+bool MCP23017::readPortbBit(unsigned char bitNumber)
 {
    int val = readPortB();
    int mask = 0x01 << (bitNumber & (0x7));
@@ -103,7 +103,7 @@ bool MCP23017::readPortbBit(int bitNumber)
 ///
 /// @param bit number 0-7 and value true/false
 /// @return true if no error
-void MCP23017::writePortaBit(int bitNumber, bool logicVal)
+void MCP23017::writePortaBit(unsigned char bitNumber, bool logicVal)
 {
    int val = readPortA();
    int mask = 0x01 << (bitNumber & (0x7));
@@ -119,7 +119,7 @@ void MCP23017::writePortaBit(int bitNumber, bool logicVal)
 ///
 /// @param bit number 0-7 and value true/false
 /// @return true if no error
-void MCP23017::writePortbBit(int bitNumber, bool logicVal)
+void MCP23017::writePortbBit(unsigned char bitNumber, bool logicVal)
 { 
    int val = readPortB();
    int mask = 0x01 << (bitNumber & (0x7));

@@ -20,10 +20,10 @@ class MCP23017
 	void writePortA(unsigned char value);
 	void writePortB(unsigned char value);
 
-  bool readPortaBit(int bitNumber);
-  bool readPortbBit(int bitNumber);
-  void writePortaBit(int bitNumber, bool logicVal);
-  void writePortbBit(int bitNumber, bool logicVal);
+  bool readPortaBit(unsigned char bitNumber);
+  bool readPortbBit(unsigned char bitNumber);
+  void writePortaBit(unsigned char bitNumber, bool logicVal);
+  void writePortbBit(unsigned char bitNumber, bool logicVal);
   
 
     typedef enum  

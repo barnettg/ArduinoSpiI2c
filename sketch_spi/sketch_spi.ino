@@ -88,6 +88,20 @@ Adafruit_MCP4725 dac;
 //   send GBWNDD<cr>  read device N(0-5) port B with data  DD(8-bit hex) 
 //    rec back gbwnDD  
 
+//   send GXARNZ<cr>  read device N(0-5) port A bit Z
+//    rec back gxarnzD   with data  D(1-bit hex) 
+//
+//   send GXBRNZ<cr>  read device N(0-5) port B bit Z
+//    rec back gxbrnzD   with data  DD(8-bit hex) 
+//
+//   send GXAWNZD<cr>  write device N(0-5) port A bit Z with data D(1-bit hex) 
+//    rec back gxawnzD   
+//
+//   send GXBWNZD<cr>  read device N(0-5) port B bit Zwith data  D(1-bit hex) 
+//    rec back gxbwnzD  
+
+        
+
  // function prototypes
 void sendOutData(String dtaStr);
 int getRecBufferSize(void);
@@ -682,9 +696,173 @@ void decodeSerial()
     //
     //   send GBWNDD<cr>  read device N(0-5) port B with data  DD(8-bit hex) 
     //    rec back gbwnDD  
+
+    //   send GXARNZ<cr>  read device N(0-5) port A bit Z
+    //    rec back gxarnzD   with data  D(1-bit hex) 
+    //
+    //   send GXBRNZ<cr>  read device N(0-5) port B bit Z
+    //    rec back gxbrnzD   with data  DD(8-bit hex) 
+    //
+    //   send GXAWNZD<cr>  write device N(0-5) port A bit Z with data D(1-bit hex) 
+    //    rec back gxawnzD   
+    //
+    //   send GXBWNZD<cr>  read device N(0-5) port B bit Zwith data  D(1-bit hex) 
+    //    rec back gxbwnzD  
+
+
+
+    
     char tmp2;
     tmp2 = getNextChar();
-    if (tmp2 == 'W') // write reg   
+    if (tmp2 == 'X') // bits  
+    {
+        //   send GXARNZ<cr>  read device N(0-5) port A bit Z
+        //    rec back gxarnzD   with data  D(1-bit hex) 
+        //
+        //   send GXBRNZ<cr>  read device N(0-5) port B bit Z
+        //    rec back gxbrnzD   with data  DD(8-bit hex) 
+        //
+        //   send GXAWNZD<cr>  write device N(0-5) port A bit Z with data D(1-bit hex) 
+        //    rec back gxawnzD   
+        //
+        //   send GXBWNZD<cr>  read device N(0-5) port B bit Zwith data  D(1-bit hex) 
+        //    rec back gxbwnzD  
+        char tmp3;
+        tmp3 = getNextChar(); // port char
+        char tmp4;
+        tmp4 = getNextChar(); // read or write char
+        char tmp5;
+        tmp5 = getNextChar(); // device char
+        unsigned char deviceNum = (unsigned char) convertCharToDecimal(tmp5);
+        tmp5 = getNextChar(); // bit number char
+        unsigned char bitNum = (unsigned char) convertCharToDecimal(tmp5);
+        String deviceStr = conver4bitToString(deviceNum);
+        String bitStr = conver4bitToString(bitNum);
+        
+        if (tmp3 == 'A' && tmp4 == 'R' )
+        {
+            bool dta = 0;
+            switch (deviceNum)
+            {
+              case 0:
+                dta = m_MCP23017_20.readPortaBit(bitNum);
+                break;
+              case 1:
+                dta = m_MCP23017_21.readPortaBit(bitNum);
+                break;
+              case 2:
+                dta = m_MCP23017_22.readPortaBit(bitNum);
+                break;
+              case 3:
+                dta = m_MCP23017_23.readPortaBit(bitNum);
+                break;
+              case 4:
+                dta = m_MCP23017_24.readPortaBit(bitNum);
+                break;
+              default:
+                break;
+            }
+          String dataStr = "0";
+          if (dta) dataStr = "1";      
+          // return response
+          String resp = "gxar" + deviceStr + bitStr + dataStr;
+          Serial.println(resp);
+        }
+        else if (tmp3 == 'A' && tmp4 == 'W' )
+        {
+            tmp5 = getNextChar(); // bit data char
+            unsigned char dataBit = (unsigned char) convertCharToDecimal(tmp5);
+            switch (deviceNum)
+            {
+              case 0:
+                m_MCP23017_20.writePortaBit(bitNum, (bool) dataBit);
+                break;
+              case 1:
+                m_MCP23017_21.writePortaBit(bitNum, (bool) dataBit);
+                break;
+              case 2:
+                m_MCP23017_22.writePortaBit(bitNum, (bool) dataBit);
+                break;
+              case 3:
+                m_MCP23017_23.writePortaBit(bitNum, (bool) dataBit);
+                break;
+              case 4:
+                m_MCP23017_24.writePortaBit(bitNum, (bool) dataBit);
+                break;
+              default:
+                break;
+            }
+          String dataStr = "0";
+          if (dataBit != 0) dataStr = "1";      
+          // return response
+          String resp = "gxaw" + deviceStr + bitStr + dataStr;
+          Serial.println(resp);         
+        }
+        else if (tmp3 == 'B' && tmp4 == 'R' )
+        {
+            bool dta = 0;
+            switch (deviceNum)
+            {
+              case 0:
+                dta = m_MCP23017_20.readPortbBit(bitNum);
+                break;
+              case 1:
+                dta = m_MCP23017_21.readPortbBit(bitNum);
+                break;
+              case 2:
+                dta = m_MCP23017_22.readPortbBit(bitNum);
+                break;
+              case 3:
+                dta = m_MCP23017_23.readPortbBit(bitNum);
+                break;
+              case 4:
+                dta = m_MCP23017_24.readPortbBit(bitNum);
+                break;
+              default:
+                break;
+            }
+          String dataStr = "0";
+          if (dta) dataStr = "1";      
+          // return response
+          String resp = "gxbr" + deviceStr + bitStr + dataStr;
+          Serial.println(resp);        
+        }
+        else if (tmp3 == 'B' && tmp4 == 'W' )
+        {
+            tmp5 = getNextChar(); // bit data char
+            unsigned char dataBit = (unsigned char) convertCharToDecimal(tmp5);
+            switch (deviceNum)
+            {
+              case 0:
+                m_MCP23017_20.writePortbBit(bitNum, (bool) dataBit);
+                break;
+              case 1:
+                m_MCP23017_21.writePortbBit(bitNum, (bool) dataBit);
+                break;
+              case 2:
+                m_MCP23017_22.writePortbBit(bitNum, (bool) dataBit);
+                break;
+              case 3:
+                m_MCP23017_23.writePortbBit(bitNum, (bool) dataBit);
+                break;
+              case 4:
+                m_MCP23017_24.writePortbBit(bitNum, (bool) dataBit);
+                break;
+              default:
+                break;
+            }
+          String dataStr = "0";
+          if (dataBit != 0) dataStr = "1";      
+          // return response
+          String resp = "gxbw" + deviceStr + bitStr + dataStr;
+          Serial.println(resp);              
+        }
+        else
+        {
+             Serial.println("Error with GX command");   
+        }
+    }
+    else if  (tmp2 == 'W') // write reg   
     {
       char tmp3;
       tmp3 = getNextChar(); // device number
